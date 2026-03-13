@@ -4,18 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Preventivi Piastrellista</title>
-    <!-- Google Fonts for a premium look -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#EA580C">
+    <link rel="apple-touch-icon" href="tiler_logo.png">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=2">
     <!-- html2pdf.js for easy PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="script.js?v=2"></script>
 </head>
 <body>
     
     <!-- HOME VIEW -->
     <div id="home-view" class="view-container active">
-        <header class="app-header">
+        <header class="app-header home-header">
+            <div class="home-logo-container">
+                <img src="tiler_logo.png" alt="SISTO PAVIMENTI Logo" class="home-logo">
+            </div>
             <h1>I Miei Lavori</h1>
+            <button id="install-app-btn" class="btn btn-primary btn-install" style="display: none; margin-top: 10px;">
+                <span class="icon">📲</span> Installa App sul Telefono
+            </button>
         </header>
         
         <div id="jobs-list" class="jobs-container">
@@ -35,6 +46,9 @@
     <div id="creator-view" class="view-container hidden">
         <header class="app-header">
             <button id="btn-back" class="btn-icon header-btn">← Indietro</button>
+            <div class="header-center">
+                <!-- Removed dynamic logo upload since we are hardcoding the logo -->
+            </div>
             <button id="btn-save" class="btn-text header-btn">Salva</button>
         </header>
 
@@ -42,14 +56,24 @@
             <!-- Floating controls for PDF -->
             <div class="floating-controls no-print">
                 <button id="add-section-btn" class="btn btn-primary" aria-label="Aggiungi Sezione">
-                    <span class="icon">+</span> Nuova Sezione
+                    <span class="icon">+</span> Stanza
                 </button>
                 <button id="export-pdf-btn" class="btn btn-success" aria-label="Scarica PDF">
-                    <span class="icon">💾</span> Scarica PDF
+                    <span class="icon">📄</span> PDF
                 </button>
             </div>
 
             <main id="invoice-doc" class="glass-card">
+                <!-- PDF HEADER: Logo and Business Info -->
+                <div class="invoice-pdf-header">
+                    <div id="pdf-logo-container" class="pdf-logo">
+                        <img src="tiler_logo.png" alt="SISTO PAVIMENTI Logo">
+                    </div>
+                    <div class="business-info print-only">
+                        <!-- Eventuali dati fissi di tuo padre possono andare qui -->
+                    </div>
+                </div>
+
                 <header class="invoice-header">
                     <input type="text" id="client-name" class="editable-title" placeholder="NOME CANTIERE / CLIENTE">
                     <div class="date-display" id="job-date"></div>
@@ -63,14 +87,21 @@
                     <div class="totals-section">
                         <div class="total-row">
                             <span class="label">TOT:</span>
-                            <span class="value" id="grand-total">0.00</span>
+                            <div class="value-group">
+                                <span class="value" id="grand-total">0,00</span>
+                                <span class="print-only">-</span>
+                            </div>
                         </div>
                         <div class="advance-row">
-                            <span class="label">acc:</span>
-                            <input type="number" id="advance-payment" class="editable-number" placeholder="0" step="any">
+                            <span class="label">Acconto:</span>
+                            <div class="value-group">
+                                <input type="number" id="advance-payment" class="editable-number" placeholder="0" step="any">
+                                <span class="print-only">=</span>
+                            </div>
                         </div>
                         <div class="balance-row">
-                            <span class="value" id="final-balance">0.00</span>
+                            <span class="label">DA PAGARE:</span>
+                            <span class="value" id="final-balance">0,00</span>
                         </div>
                     </div>
                 </footer>
@@ -82,7 +113,7 @@
     <template id="section-template">
         <section class="invoice-section">
             <div class="section-header no-print">
-                <input type="text" class="section-title editable-input font-bold" placeholder="Nome Sezione (es. piano terra)">
+                <input type="text" class="section-title editable-input font-bold" placeholder="Nome Stanza (es. Cucina, Bagno)">
                 <button class="btn btn-icon btn-danger remove-section-btn" title="Rimuovi Sezione">×</button>
             </div>
             <!-- Section title for PRINT only (to handle the styling without inputs) -->
@@ -94,7 +125,7 @@
             
             <div class="section-actions no-print">
                 <button class="btn btn-secondary add-item-btn">+ Calcolo (Mq x €)</button>
-                <button class="btn btn-secondary add-manual-btn">+ Importo Fisso</button>
+                <button class="btn btn-secondary add-manual-btn">+ Voce Fissa</button>
             </div>
 
             <div class="section-total">
@@ -117,9 +148,13 @@
                     <input type="number" class="item-price editable-number" placeholder="€" step="any">
                     <span class="separator">=</span>
                 </div>
+                <!-- Spostato il display del totale sotto su mobile o a destra senza input testo sovrapposto -->
                 <div class="item-total-box">
-                    <input type="number" class="item-total-input editable-number no-print" placeholder="Tot" step="any">
-                    <span class="item-total-display">0,00</span>
+                    <input type="number" class="item-total-input editable-number no-print hidden-input" placeholder="Tot" step="any" style="display:none;">
+                    <div class="item-total-display-wrapper">
+                        <span class="item-total-currency">€</span>
+                        <span class="item-total-display">0,00</span>
+                    </div>
                 </div>
             </div>
         </div>

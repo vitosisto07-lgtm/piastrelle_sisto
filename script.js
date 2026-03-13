@@ -20,6 +20,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const clientNameInput = document.getElementById('client-name');
     const jobDateEl = document.getElementById('job-date');
     const advancePaymentInput = document.getElementById('advance-payment');
+    
+    // PWA Install Logic
+    const installAppBtn = document.getElementById('install-app-btn');
+    let deferredPrompt;
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registered', reg))
+                .catch(err => console.error('Service Worker registration failed', err));
+        });
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        deferredPrompt = e;
+        // Update UI to notify the user they can add to home screen
+        if(installAppBtn) installAppBtn.style.display = 'flex';
+    });
+
+    if(installAppBtn) {
+        installAppBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                    installAppBtn.style.display = 'none';
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                deferredPrompt = null;
+            }
+        });
+    }
     const grandTotalEl = document.getElementById('grand-total');
     const finalBalanceEl = document.getElementById('final-balance');
 
@@ -38,15 +75,33 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     btnBack.addEventListener('click', () => {
-        if (confirm('Tornare alla home? Assicurati di aver salvato.')) {
-            switchView('home');
-        }
+        switchView('home');
     });
 
     btnSave.addEventListener('click', saveCurrentJob);
     btnAddSection.addEventListener('click', () => addSection());
+    btnAddManualGlobal.addEventListener('click', () => {
+        const lastSection = sectionsContainer.lastElementChild;
+        if (lastSection) addItemToSection(lastSection, {type: 'manual'});
+        else addSection().then(sec => addItemToSection(sec, {type: 'manual'}));
+    });
     btnExportPdf.addEventListener('click', generatePDF);
     advancePaymentInput.addEventListener('input', calculateGlobalTotals);
+
+    // --- Logo Handling ---
+    logoUpload.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                appLogo = event.target.result;
+                localStorage.setItem(LOGO_KEY, appLogo);
+                pdfLogoContainer.innerHTML = `<img src="${appLogo}" alt="Logo Aziendale">`;
+                alert('Logo caricato con successo!');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 
     function switchView(viewName) {
         if (viewName === 'home') {
@@ -99,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     desc: row.querySelector('.item-desc').value,
                     qty: isManual ? 0 : parseNumber(row.querySelector('.item-qty').value),
                     price: isManual ? 0 : parseNumber(row.querySelector('.item-price').value),
-                    total: parseNumber(row.querySelector(isManual ? '.item-total-input' : '.item-total-display').textContent || row.querySelector('.item-total-input').value)
+                    total: isManual ? parseNumber(row.querySelector('.item-total-input').value) : (parseNumber(row.querySelector('.item-qty').value) * parseNumber(row.querySelector('.item-price').value))
                 });
             });
             jobData.sections.push(section);
@@ -112,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
             jobs.unshift(jobData);
         }
 
-        localStorage.setItem('tiler_jobs', JSON.stringify(jobs));
+        localStorage.setItem(JOBS_KEY, JSON.stringify(jobs));
         alert('Lavoro salvato con successo!');
     }
 
@@ -141,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
         event.stopPropagation();
         if (confirm('Eliminare definitivamente questo lavoro?')) {
             jobs = jobs.filter(j => j.id !== jobId);
-            localStorage.setItem('tiler_jobs', JSON.stringify(jobs));
+            localStorage.setItem(JOBS_KEY, JSON.stringify(jobs));
             renderJobsList();
         }
     }
@@ -169,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     else total += (i.qty * i.price);
                 });
             });
-            total -= (job.advance || 0);
+            const finalTotal = total - (job.advance || 0);
 
             card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -179,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <button class="btn-icon no-print delete-job-btn" style="color: var(--danger);">×</button>
                 </div>
-                <div class="job-total">€ ${formatNumber(total)}</div>
+                <div class="job-total">€ ${formatNumber(finalTotal)}</div>
             `;
 
             card.querySelector('.delete-job-btn').addEventListener('click', (e) => deleteJob(job.id, e));
@@ -238,8 +293,9 @@ document.addEventListener('DOMContentLoaded', () => {
             itemRow.classList.add('is-manual');
             itemRow.querySelector('.calc-group').classList.add('no-print');
             itemRow.querySelector('.calc-group').style.display = 'none';
-            itemRow.querySelector('.item-total-input').classList.remove('no-print');
-            itemRow.querySelector('.item-total-input').value = data.total || '';
+            const totalInput = itemRow.querySelector('.item-total-input');
+            totalInput.style.display = 'inline-block';
+            totalInput.value = data.total || '';
         } else {
             itemRow.querySelector('.item-qty').value = data.qty || '';
             itemRow.querySelector('.item-price').value = data.price || '';
@@ -281,9 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const qty = parseNumber(row.querySelector('.item-qty').value);
             const price = parseNumber(row.querySelector('.item-price').value);
             total = qty * price;
-            // For print we show the calc string if not manual
-            const calcGroup = row.querySelector('.calc-group');
-            // No extra labels needed, inputs will be hidden but values attribute is set in PDF gen
         }
 
         display.textContent = formatNumber(total);
@@ -320,15 +373,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function generatePDF() {
         const element = document.getElementById('invoice-doc');
         
-        // Hide UI elements
+        // Ensure all input values are reflected in the PDF capture
         const inputs = element.querySelectorAll('input');
         inputs.forEach(input => input.setAttribute('value', input.value));
 
         const opt = {
-            margin:       10,
+            margin:       [15, 15, 15, 15],
             filename:     'preventivo_' + (clientNameInput.value || 'cantiere').replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.pdf',
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, scrollY: 0, windowWidth: 800 },
+            html2canvas:  { scale: 2, useCORS: true, logging: false },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
