@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Preventivi Piastrellista</title>
+    <!-- Google Fonts for a premium look -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- html2pdf.js for easy PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+    
+    <!-- HOME VIEW -->
+    <div id="home-view" class="view-container active">
+        <header class="app-header">
+            <h1>I Miei Lavori</h1>
+        </header>
+        
+        <div id="jobs-list" class="jobs-container">
+            <!-- Saved jobs will be generated here by JS -->
+            <div class="empty-state">
+                <p>Nessun preventivo salvato.</p>
+                <p>Usa il tasto + per crearne uno nuovo.</p>
+            </div>
+        </div>
+
+        <button id="fab-create" class="fab" aria-label="Crea Nuovo Lavoro">
+            <span class="icon">+</span>
+        </button>
+    </div>
+
+    <!-- CREATOR VIEW -->
+    <div id="creator-view" class="view-container hidden">
+        <header class="app-header">
+            <button id="btn-back" class="btn-icon header-btn">← Indietro</button>
+            <button id="btn-save" class="btn-text header-btn">Salva</button>
+        </header>
+
+        <div class="app-container">
+            <!-- Floating controls for PDF -->
+            <div class="floating-controls no-print">
+                <button id="add-section-btn" class="btn btn-primary" aria-label="Aggiungi Sezione">
+                    <span class="icon">+</span> Nuova Sezione
+                </button>
+                <button id="export-pdf-btn" class="btn btn-success" aria-label="Scarica PDF">
+                    <span class="icon">💾</span> Scarica PDF
+                </button>
+            </div>
+
+            <main id="invoice-doc" class="glass-card">
+                <header class="invoice-header">
+                    <input type="text" id="client-name" class="editable-title" placeholder="NOME CANTIERE / CLIENTE">
+                    <div class="date-display" id="job-date"></div>
+                </header>
+
+                <div id="sections-container">
+                    <!-- Sections will be injected here by JS -->
+                </div>
+
+                <footer class="invoice-footer">
+                    <div class="totals-section">
+                        <div class="total-row">
+                            <span class="label">TOT:</span>
+                            <span class="value" id="grand-total">0.00</span>
+                        </div>
+                        <div class="advance-row">
+                            <span class="label">acc:</span>
+                            <input type="number" id="advance-payment" class="editable-number" placeholder="0" step="any">
+                        </div>
+                        <div class="balance-row">
+                            <span class="value" id="final-balance">0.00</span>
+                        </div>
+                    </div>
+                </footer>
+            </main>
+        </div>
+    </div>
+
+    <!-- Template for a Section -->
+    <template id="section-template">
+        <section class="invoice-section">
+            <div class="section-header no-print">
+                <input type="text" class="section-title editable-input font-bold" placeholder="Nome Sezione (es. piano terra)">
+                <button class="btn btn-icon btn-danger remove-section-btn" title="Rimuovi Sezione">×</button>
+            </div>
+            <!-- Section title for PRINT only (to handle the styling without inputs) -->
+            <div class="print-section-title print-only"></div>
+
+            <div class="items-list">
+                <!-- Items will be added here -->
+            </div>
+            
+            <div class="section-actions no-print">
+                <button class="btn btn-secondary add-item-btn">+ Calcolo (Mq x €)</button>
+                <button class="btn btn-secondary add-manual-btn">+ Importo Fisso</button>
+            </div>
+
+            <div class="section-total">
+                <span class="label">TOT Sezione:</span>
+                <span class="value section-total-value">0,00</span>
+            </div>
+        </section>
+    </template>
+
+    <!-- Template for an Item Row -->
+    <template id="item-template">
+        <div class="item-row">
+            <button class="btn btn-icon btn-danger remove-item-btn no-print" title="Rimuovi Voce">×</button>
+            <input type="text" class="item-desc editable-input" placeholder="Descrizione">
+            
+            <div class="calc-box">
+                <div class="calc-group">
+                    <input type="number" class="item-qty editable-number" placeholder="Mq" step="any">
+                    <span class="separator">X</span>
+                    <input type="number" class="item-price editable-number" placeholder="€" step="any">
+                    <span class="separator">=</span>
+                </div>
+                <div class="item-total-box">
+                    <input type="number" class="item-total-input editable-number no-print" placeholder="Tot" step="any">
+                    <span class="item-total-display">0,00</span>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script src="script.js"></script>
+</body>
+</html>

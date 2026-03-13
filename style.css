@@ -1,0 +1,548 @@
+:root {
+    /* Premium Marble Theme Colors */
+    --marble-bg: #f8f9fa;
+    --card-bg: rgba(255, 255, 255, 0.85); /* Glassmorphism */
+    --text-main: #2c3e50;
+    --text-muted: #7f8c8d;
+    --primary: #34495e; /* Dark slate */
+    --primary-hover: #2c3e50;
+    --accent: #d4af37; /* Gold accent for premium feel */
+    --accent-hover: #b5952f;
+    --success: #27ae60;
+    --success-hover: #2ecc71;
+    --danger: #e74c3c;
+    --border-color: rgba(0, 0, 0, 0.1);
+    --font-main: 'Outfit', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-main);
+    color: var(--text-main);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    /* Marble Background Pattern */
+    background-color: var(--marble-bg);
+    background-image: 
+        radial-gradient(circle at 100% 150%, var(--marble-bg) 24%, white 25%, white 28%, var(--marble-bg) 29%, var(--marble-bg) 36%, white 36%, white 40%, transparent 40%, transparent),
+        radial-gradient(circle at 0 150%, var(--marble-bg) 24%, white 25%, white 28%, var(--marble-bg) 29%, var(--marble-bg) 36%, white 36%, white 40%, transparent 40%, transparent),
+        radial-gradient(circle at 50% 100%, white 10%, var(--marble-bg) 11%, var(--marble-bg) 23%, white 24%, white 30%, var(--marble-bg) 31%, var(--marble-bg) 43%, white 44%, white 50%, var(--marble-bg) 51%, var(--marble-bg) 63%, white 64%, white 71%, transparent 71%, transparent),
+        radial-gradient(circle at 100% 50%, white 5%, var(--marble-bg) 6%, var(--marble-bg) 15%, white 16%, white 20%, var(--marble-bg) 21%, var(--marble-bg) 30%, white 31%, white 35%, var(--marble-bg) 36%, var(--marble-bg) 45%, white 46%, white 49%, transparent 50%, transparent),
+        radial-gradient(circle at 0 50%, white 5%, var(--marble-bg) 6%, var(--marble-bg) 15%, white 16%, white 20%, var(--marble-bg) 21%, var(--marble-bg) 30%, white 31%, white 35%, var(--marble-bg) 36%, var(--marble-bg) 45%, white 46%, white 49%, transparent 50%, transparent);
+    background-size: 100px 50px;
+    background-attachment: fixed;
+}
+
+/* View Management */
+.view-container {
+    display: none;
+    min-height: 100vh;
+    padding-bottom: 2rem;
+}
+
+.view-container.active {
+    display: block;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header */
+.app-header {
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.app-header h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.header-btn {
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary);
+    padding: 0.5rem;
+    cursor: pointer;
+}
+
+/* Home View Layout */
+.jobs-container {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.empty-state {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 3rem 1rem;
+    font-size: 1.1rem;
+}
+
+/* Job Card */
+.job-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 1rem;
+    padding: 1.25rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: 1px solid rgba(255,255,255,0.5);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.job-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--accent);
+}
+
+.job-card:active {
+    transform: scale(0.98);
+}
+
+.job-card h3 {
+    margin-bottom: 0.25rem;
+    font-size: 1.1rem;
+}
+
+.job-card .job-date {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.job-card .job-total {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-top: 0.5rem;
+    text-align: right;
+}
+
+/* FAB */
+.fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 60px;
+    height: 60px;
+    border-radius: 30px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(52, 73, 94, 0.4);
+    cursor: pointer;
+    z-index: 100;
+    transition: transform 0.2s;
+}
+
+.fab:active {
+    transform: scale(0.9);
+}
+
+/* Creator View Layout */
+.app-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1rem;
+    padding-bottom: 100px;
+}
+
+.glass-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    min-height: 80vh;
+}
+
+/* Floating Controls (Mobile Friendly) */
+.floating-controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 1rem;
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.05);
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    z-index: 50;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Button Styles */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.85rem 1.25rem;
+    border: none;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    text-transform: uppercase;
+    flex: 1;
+    font-family: inherit;
+    letter-spacing: 0.5px;
+}
+
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:active { background: var(--primary-hover); }
+
+.btn-success { background: var(--success); color: white; }
+.btn-success:active { background: var(--success-hover); }
+
+.btn-danger { background: transparent; color: var(--danger); font-size: 1.25rem; padding: 0.5rem; }
+.btn-danger:active { background: rgba(231, 76, 60, 0.1); }
+
+.btn-secondary {
+    background: transparent;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.btn-icon {
+    padding: 0.25rem 0.5rem;
+    flex: none;
+}
+
+/* Inputs */
+input {
+    font-family: inherit;
+    color: inherit;
+    background: transparent;
+    border: none;
+    outline: none;
+    transition: background 0.2s;
+}
+
+input:focus {
+    background: rgba(212, 175, 55, 0.05); /* very subtle gold highlight */
+    border-radius: 0.25rem;
+}
+
+::placeholder {
+    color: #a0aec0;
+}
+
+.editable-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    width: 100%;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    color: var(--primary);
+}
+
+.date-display {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+
+.editable-input {
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 1rem;
+}
+
+.editable-number {
+    width: 70px;
+    text-align: right;
+    padding: 0.5rem;
+    font-weight: 600;
+}
+
+.font-bold { font-weight: 700; }
+
+/* Sections */
+.invoice-section {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    background: rgba(212, 175, 55, 0.05); /* very subtle gold background */
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+}
+
+.section-title {
+    font-size: 1.2rem;
+    color: var(--primary);
+}
+
+/* Items */
+.item-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(0,0,0,0.02);
+}
+
+.item-desc {
+    grid-column: 1 / -1; /* descriptions take full width on mobile edit */
+    margin-bottom: 0.25rem;
+    font-size: 1.05rem;
+}
+
+.calc-box {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255,255,255,0.5);
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.calc-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.item-total-box {
+    text-align: right;
+}
+
+.item-total-display {
+    min-width: 80px;
+    display: inline-block;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.separator {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.section-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.section-total {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    background: rgba(0,0,0,0.02);
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+/* Footer Totals */
+.invoice-footer {
+    margin-top: 3rem;
+    border-top: 3px solid var(--primary);
+    padding-top: 1rem;
+}
+
+.totals-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.total-row, .advance-row, .balance-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
+    gap: 10px;
+}
+
+.advance-row {
+    border-bottom: 1px solid var(--primary);
+    padding-bottom: 0.5rem;
+}
+
+.balance-row {
+    padding-top: 0.5rem;
+    font-size: 1.5rem;
+    color: var(--primary);
+}
+
+.print-only { display: none; }
+
+/* Print Styles (For PDF Generation) */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .print-only { display: block; }
+    
+    body {
+        background: white !important;
+    }
+
+    .app-container {
+        padding: 0;
+        margin: 0;
+        max-width: 100%;
+    }
+
+    .glass-card {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+    }
+
+    .invoice-header {
+        margin-bottom: 30px;
+    }
+
+    .editable-title {
+        font-size: 22px;
+        color: black;
+    }
+
+    /* Column Alignment Logic for Print */
+    .invoice-section {
+        margin-bottom: 20px;
+        border-bottom: none;
+    }
+
+    .print-section-title {
+        font-weight: 800;
+        font-size: 1.1rem;
+        margin-top: 15px;
+        margin-bottom: 5px;
+    }
+
+    .item-row {
+        display: grid;
+        grid-template-columns: 1fr 150px 100px; /* Aligned columns */
+        gap: 0;
+        padding: 2px 0;
+        border-bottom: none;
+    }
+
+    .item-desc {
+        grid-column: 1;
+        margin-bottom: 0;
+        min-width: unset;
+    }
+
+    .calc-box {
+        grid-column: 2 / 4;
+        display: grid;
+        grid-template-columns: 150px 100px;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+    }
+
+    .calc-group {
+        justify-content: flex-end;
+        padding-right: 10px;
+    }
+
+    .item-total-display {
+        text-align: right;
+        color: black;
+    }
+
+    .section-total {
+        display: none; /* Hide intermediate section totals if requested to look like screen */
+    }
+
+    .invoice-footer {
+        border-top: 1px solid #000;
+        margin-top: 50px;
+    }
+
+    .totals-section {
+        font-size: 18px;
+    }
+
+    .total-row .value::after { content: '-'; margin-left: 2px; }
+    
+    .advance-row {
+        border-bottom: none; /* remove default */
+        position: relative;
+    }
+    
+    .advance-row::after {
+        content: '';
+        position: absolute;
+        bottom: 0px;
+        right: 0;
+        width: 150px; /* length of the line */
+        border-bottom: 2px solid #000;
+    }
+
+    .advance-row .value::after { content: '='; margin-left: 2px; }
+    
+    .balance-row {
+        color: black;
+        font-weight: 800;
+        margin-top: 5px;
+    }
+}
