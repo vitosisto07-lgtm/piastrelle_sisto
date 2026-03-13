@@ -1,0 +1,17 @@
+{
+  "name": "Master Preventivi",
+  "short_name": "Master",
+  "description": "Applicazione per generare preventivi di posa piastrelle e cantieri.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F3F4F6",
+  "theme_color": "#2563EB",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Master Preventivi</title>
+    
+    <!-- PWA Setup -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563EB">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Preventivi Pro">
+    
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <!-- PDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Supabase API -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Persistent App Container -->
+    <div class="app-wrapper">
+        
+        <!-- Top App Header -->
+        <header class="app-header pdf-exclude">
+            <div class="header-side-left"></div>
+            
+            <div class="header-logo">
+                <div class="logo-circle">
+                    <i data-lucide="calculator"></i>
+                </div>
+                <h1>Master Preventivi</h1>
+            </div>
+            
+            <div class="header-side-right">
+                <button id="btn-install-pwa" class="btn btn-outline btn-small" style="display: none;">
+                    <i data-lucide="download"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Scrollable Content -->
+        <main class="main-content">
+            
+            <!-- VIEW: NEW ESTIMATE -->
+            <section id="view-new" class="app-view active">
+                
+                <!-- This container is the one rendered to PDF -->
+                <div id="pdf-container" class="pdf-container">
+                    
+                    <!-- Professional PDF Header -->
+                    <div class="pdf-only pdf-professional-header">
+                        <div class="pdf-logo-container">
+                            <img id="pdf-company-logo" src="" alt="Logo Azienda" style="display: none;">
+                        </div>
+                        <div class="pdf-company-info">
+                            <h2 id="pdf-company-name">La Tua Azienda</h2>
+                            <p id="pdf-company-address">Indirizzo Azienda</p>
+                            <p>P.IVA/C.F: <span id="pdf-company-vat"></span> | Tel: <span id="pdf-company-phone"></span></p>
+                            <p id="pdf-company-email"></p>
+                        </div>
+                        <div class="pdf-doc-info">
+                            <h1 class="pdf-title">PREVENTIVO</h1>
+                            <p class="pdf-date">Data: <span id="pdf-current-date"></span></p>
+                            <p class="pdf-site-number">Cantiere: <span id="pdf-site-name" class="pdf-site-name-val"></span></p>
+                        </div>
+                    </div>
+
+                    <div class="card pdf-exclude-shadow">
+                        <div class="card-header pdf-exclude">
+                            <h2 class="card-title">Intestazione Cantiere / Cliente (Solo per il PDF)</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="input-group">
+                                <label for="cantiere">Nome Cantiere o Cliente</label>
+                                <input type="text" id="cantiere" placeholder="Es. 2026-001 Appartamento Rossi" autocomplete="off">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card pdf-exclude-shadow">
+                        <div class="card-header pdf-exclude">
+                            <h2 class="card-title">Voci Lavoro</h2>
+                            <p class="card-subtitle">Aggiungi i lavori e i costi</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="entries-list" id="entries-list">
+                                <!-- JS Injected Fields -->
+                                <div class="empty-state" id="empty-state">
+                                    <div class="empty-icon"><i data-lucide="clipboard-list"></i></div>
+                                    <p>Nessuna voce inserita.</p>
+                                    <small>Premi i tasti qui sotto per aggiungere la prima riga al preventivo.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="total-bar">
+                        <span class="total-label">Totale Finale:</span>
+                        <span class="total-amount">€ <span id="grand-total">0.00</span></span>
+                    </div>
+
+                </div> <!-- End PDF Container -->
+
+                <!-- Action Floating Controls (Excluded from PDF) -->
+                <div class="action-dock pdf-exclude">
+                    <div class="add-buttons">
+                        <button class="btn btn-outline" id="btn-add-mq" title="Aggiungi Mq x Prezzo">
+                            <i data-lucide="grid-3x3"></i>
+                            <span>Mq / Pz</span>
+                        </button>
+                        <button class="btn btn-outline" id="btn-add-time" title="Aggiungi Giornata (Data)" style="color: #6366f1; border-color: #6366f1;">
+                            <i data-lucide="calendar"></i>
+                            <span>Giornate</span>
+                        </button>
+                        <button class="btn btn-outline" id="btn-add-fixed" title="Aggiungi Totale Fisso">
+                            <i data-lucide="coins"></i>
+                            <span>Costo Fisso</span>
+                        </button>
+                        <button class="btn btn-outline" id="btn-add-acconto" title="Aggiungi Acconto (Data e Prezzo)" style="color: var(--success); border-color: var(--success);">
+                            <i data-lucide="banknote"></i>
+                            <span>Acconto</span>
+                        </button>
+                    </div>
+                    
+                    <div class="primary-actions">
+                        <button class="btn btn-primary btn-full" id="btn-save" title="Salva Preventivo">
+                            <i data-lucide="save"></i>
+                            <span>Salva DB</span>
+                        </button>
+                        
+                        <button class="btn btn-success btn-full" id="btn-export">
+                            <i data-lucide="file-down"></i>
+                            <span>Genera PDF Pro</span>
+                        </button>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- VIEW: HISTORY -->
+            <section id="view-history" class="app-view">
+                <div class="view-header" id="history-main-header">
+                    <h2>Le Mie Cartelle</h2>
+                    <p>Organizza i tuoi preventivi per cantiere</p>
+                    
+                    <button class="btn btn-primary btn-full" id="btn-new-folder" style="margin-top: 15px;">
+                        <i data-lucide="folder-plus"></i> Nuova Cartella
+                    </button>
+                </div>
+                
+                <div class="view-header" id="history-folder-header" style="display: none;">
+                    <button class="btn btn-outline btn-small" id="btn-back-folders" style="margin-bottom: 15px;">
+                        <i data-lucide="arrow-left"></i> Indietro
+                    </button>
+                    <h2 id="folder-title-display">Nome Cartella</h2>
+                    <p>Preventivi in questa cartella</p>
+                </div>
+
+                <div class="history-list" id="folders-list">
+                    <!-- Folders injected here -->
+                    <div class="empty-state">
+                        <div class="empty-icon"><i data-lucide="folder-open"></i></div>
+                        <p>Nessuna cartella trovata.</p>
+                        <small>Crea la tua prima cartella con il tasto in alto.</small>
+                    </div>
+                </div>
+
+                <div class="history-list" id="folder-items-list" style="display: none;">
+                    <!-- Items in folder injected here -->
+                </div>
+            </section>
+
+            <!-- VIEW: SETTINGS -->
+            <section id="view-settings" class="app-view">
+                <div class="view-header">
+                    <h2>Impostazioni Azienda</h2>
+                    <p>Questi dati appariranno nell'intestazione del PDF</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div class="settings-form">
+                            <div class="logo-upload-group">
+                                <label>Logo dell'Azienda</label>
+                                <div class="logo-preview" id="logo-preview-box">
+                                    <img id="settings-logo-img" src="" style="display: none;">
+                                    <div class="logo-placeholder"><i data-lucide="image-plus"></i><br>Carica Logo</div>
+                                </div>
+                                <input type="file" id="logo-input" accept="image/png, image/jpeg, image/jpg" style="display: none;">
+                                <div class="logo-actions">
+                                    <button class="btn btn-outline btn-small" id="btn-upload-logo">Scegli Immagine</button>
+                                    <button class="btn btn-danger-outline btn-small" id="btn-remove-logo" style="display:none;">Rimuovi</button>
+                                </div>
+                            </div>
+                            
+                            <hr class="divider">
+
+                            <div class="input-group">
+                                <label for="set-name">Nome Azienda / Professionista</label>
+                                <input type="text" id="set-name" placeholder="Es. Edilizia Rossi srl">
+                            </div>
+                            <div class="input-group">
+                                <label for="set-address">Indirizzo</label>
+                                <input type="text" id="set-address" placeholder="Es. Via Roma 1, Milano">
+                            </div>
+                            <div class="input-group">
+                                <label for="set-vat">Partita IVA / Codice Fiscale</label>
+                                <input type="text" id="set-vat" placeholder="Es. 12345678901">
+                            </div>
+                            <div class="input-group">
+                                <label for="set-phone">Telefono</label>
+                                <input type="tel" id="set-phone" placeholder="Es. 333 1234567">
+                            </div>
+                            <div class="input-group">
+                                <label for="set-email">Email</label>
+                                <input type="email" id="set-email" placeholder="Es. info@azienda.it">
+                            </div>
+                            
+                            <button class="btn btn-primary btn-full" id="btn-save-settings" style="margin-top: 20px;">
+                                <i data-lucide="check"></i> Salva Impostazioni
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: ACCOUNT -->
+            <section id="view-account" class="app-view">
+                <div class="view-header">
+                    <h2>Il Tuo Account</h2>
+                    <p>Gestisci il tuo profilo e i tuoi dati Cloud</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-body" style="text-align: center; padding: 30px 20px;">
+                        <div class="logo-circle" style="width: 80px; height: 80px; margin: 0 auto 20px; background: var(--accent); color: white;">
+                            <i data-lucide="user" style="width: 40px; height: 40px;"></i>
+                        </div>
+                        <h3 id="profile-email" style="margin-bottom: 5px;">email@esempio.it</h3>
+                        <p id="profile-display-name" style="font-weight: 600; color: var(--accent); margin-bottom: 5px;"></p>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px;">Sincronizzazione Cloud Attiva</p>
+                        
+                        <div class="input-group" style="text-align: left; margin-bottom: 20px;">
+                            <label for="set-theme">Aspetto / Scelta Colori</label>
+                            <select id="set-theme" class="main-select">
+                                <option value="blue">Blu Classico (Predefinito)</option>
+                                <option value="green">Verde Smeraldo</option>
+                                <option value="orange">Arancio Cantiere</option>
+                                <option value="red">Rosso Mattone</option>
+                                <option value="purple">Viola Moderno</option>
+                                <option value="dark">Tema Notturno (Scuro)</option>
+                            </select>
+                            <button class="btn btn-primary btn-small btn-full" id="btn-save-theme" style="margin-top: 10px;">Applica Colore</button>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button class="btn btn-outline btn-full" id="btn-sync-now">
+                                <i data-lucide="refresh-cw"></i> Sincronizza Ora
+                            </button>
+                            <button class="btn btn-danger-outline btn-full" id="btn-logout-new">
+                                <i data-lucide="log-out"></i> Esci dall'Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Stato Database</h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
+                            <span>Connessione Supabase:</span>
+                            <span style="color: var(--success); font-weight: 600;">CONNESSO</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Bottom Tab Navigation -->
+        <nav class="bottom-nav pdf-exclude">
+            <button class="tab-btn active" data-tab="view-new">
+                <i data-lucide="plus-circle"></i>
+                <span>Nuovo</span>
+            </button>
+            <button class="tab-btn" data-tab="view-history">
+                <i data-lucide="folder"></i>
+                <span>Cartelle</span>
+            </button>
+            <button class="tab-btn" data-tab="view-settings">
+                <i data-lucide="building"></i>
+                <span>Azienda</span>
+            </button>
+            <button class="tab-btn" data-tab="view-account">
+                <i data-lucide="user"></i>
+                <span>Account</span>
+            </button>
+        </nav>
+
+        <!-- Auth / Login Modal (Forced until logged in) -->
+        <div class="modal-overlay" id="modal-auth" style="display: flex; background: var(--surface); z-index: 9999;">
+            <div class="modal-card" style="box-shadow: none; border: none;">
+                <div class="modal-header" style="justify-content:center; border-bottom: none; padding-top:40px;">
+                    <div class="logo-circle" style="width: 60px; height: 60px; margin: 0 auto;">
+                        <i data-lucide="hard-hat" style="width:30px; height:30px;"></i>
+                    </div>
+                </div>
+                <div class="modal-body" style="text-align: center;">
+                    <h2 style="margin-bottom: 5px;">Master Preventivi</h2>
+                    <p class="modal-instructions" style="margin-bottom: 25px;">Gestione Preventivi Professionale</p>
+                    
+                    <div id="auth-error-msg" style="display: none; background: #fee2e2; color: #b91c1c; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 15px; border: 1px solid #fecaca; text-align: left;">
+                        <i data-lucide="alert-circle" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle; margin-right: 5px;"></i>
+                        <span id="auth-error-text"></span>
+                    </div>
+                    
+                    <div id="signup-extra-fields" style="display: none;">
+                        <div class="input-group" style="text-align: left;">
+                            <label>Nome Completo</label>
+                            <input type="text" id="auth-name" placeholder="Es. Mario Rossi">
+                        </div>
+                    </div>
+
+                    <div class="input-group" style="text-align: left;">
+                        <label>Email</label>
+                        <input type="email" id="auth-email" placeholder="iltuonome@email.com">
+                    </div>
+                    
+                    <div class="input-group" style="text-align: left; position: relative;">
+                        <label>Password</label>
+                        <input type="password" id="auth-password" placeholder="Min. 6 caratteri">
+                        <button id="btn-toggle-password" style="position: absolute; right: 10px; top: 38px; background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 5px;">
+                            <i data-lucide="eye" style="width: 18px; height: 18px;"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Login View Buttons -->
+                    <div id="auth-login-actions">
+                        <button class="btn btn-primary btn-full" id="btn-login" style="margin-top: 15px;">Accedi</button>
+                        <div style="margin: 15px 0; font-size: 0.85rem; color: var(--text-muted);">oppure</div>
+                        <button class="btn btn-outline btn-full" id="btn-show-signup">Crea un nuovo Account</button>
+                    </div>
+
+                    <!-- Signup View Buttons -->
+                    <div id="auth-signup-actions" style="display: none;">
+                        <button class="btn btn-success btn-full" id="btn-signup-confirm" style="margin-top: 15px;">Registrati Ora</button>
+                        <div style="margin: 15px 0; font-size: 0.85rem; color: var(--text-muted);">oppure</div>
+                        <button class="btn btn-outline btn-full" id="btn-show-login">Hai già un account? Accedi</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal Save Preventivo -->
+        <div class="modal-overlay" id="modal-save" style="display: none;">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3>Salva Preventivo</h3>
+                    <button class="btn-close-modal" id="btn-close-modal-save"><i data-lucide="x"></i></button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-instructions">Scegli in quale cartella salvare questo preventivo:</p>
+                    
+                    <div class="input-group" style="margin-top: 15px;">
+                        <label>Cartella Destinazione</label>
+                        <select id="save-folder-select" class="main-select">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+
+                    <div style="text-align: center; margin-bottom: 20px; font-weight: 600; font-size: 0.9em; color: var(--text-muted)">OPPURE</div>
+
+                    <div class="input-group">
+                        <label>Crea Nuova Cartella al volo</label>
+                        <input type="text" id="save-new-folder-input" placeholder="Es. Cantiere Napoli">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary btn-full" id="btn-confirm-save">Conferma Salvataggio</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal Create Folder (from Home) -->
+        <div class="modal-overlay" id="modal-new-folder" style="display: none;">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3>Nuova Cartella</h3>
+                    <button class="btn-close-modal" id="btn-close-modal-folder"><i data-lucide="x"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <label>Nome Cartella Cantiere/Cliente</label>
+                        <input type="text" id="new-folder-input" placeholder="Es. Cantiere Bianchi Villetta">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary btn-full" id="btn-confirm-new-folder">Crea Cartella</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification Container -->
+        <div id="toast-container"></div>
+    </div>
+
+    <!-- Templates -->
+    
+    <!-- Template MQ/Pz -->
+    <template id="tpl-mq">
+        <div class="entry-card" data-type="mq">
+            <div class="entry-main">
+                <input type="text" class="input-desc input-seamless" placeholder="Descrizione (es. Posa Piastrelle 60x60)...">
+                <button class="btn-remove-entry" title="Elimina"><i data-lucide="trash-2"></i></button>
+            </div>
+            <div class="entry-math">
+                <div class="math-group">
+                    <label>Mq / Pz</label>
+                    <input type="number" class="input-mq math-input" placeholder="0.00" step="0.01">
+                </div>
+                <div class="math-operator">×</div>
+                <div class="math-group">
+                    <label>Prezzo (€)</label>
+                    <input type="number" class="input-price math-input" placeholder="0.00" step="0.01">
+                </div>
+                <div class="math-equals">=</div>
+                <div class="math-result">
+                    <span class="currency">€</span>
+                    <span class="row-total">0.00</span>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Template Giornate/Data -->
+    <template id="tpl-time">
+        <div class="entry-card time-type" data-type="time">
+            <div class="entry-main">
+                <input type="text" class="input-desc input-seamless" placeholder="Descrizione (es. Lavori in economia)...">
+                <button class="btn-remove-entry" title="Elimina"><i data-lucide="trash-2"></i></button>
+            </div>
+            <div class="entry-math flex-start">
+                <div class="date-display time-display pdf-only" style="display:none; margin-top: 2px; font-weight: 500; color: #4338CA;">Data Lavoro</div>
+                <div class="math-group">
+                    <label>Seleziona Data</label>
+                    <input type="date" class="input-date math-input-date" style="width: 130px; padding: 6px 10px; font-size: 0.9rem;">
+                </div>
+                <div class="math-operator pdf-exclude-shadow" style="margin-left: 10px; margin-right: 10px;"></div>
+                <div class="math-group">
+                    <label>Prezzo (Giornata)</label>
+                    <input type="number" class="input-price math-input" placeholder="0.00" step="0.01">
+                </div>
+                <div class="math-equals">=</div>
+                <div class="math-result">
+                    <span class="currency">€</span>
+                    <span class="row-total">0.00</span>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Template Fisso -->
+    <template id="tpl-fixed">
+        <div class="entry-card fixed-type" data-type="fixed">
+            <div class="entry-main">
+                <input type="text" class="input-desc input-seamless" placeholder="Descrizione (es. Trasporto, Materiale)...">
+                <button class="btn-remove-entry" title="Elimina"><i data-lucide="trash-2"></i></button>
+            </div>
+            <div class="entry-math flex-end">
+                <div class="math-group">
+                    <label>Totale Fisso (€)</label>
+                    <input type="number" class="input-fixed math-input total-input-large" placeholder="0.00" step="0.01">
+                </div>
+                <div class="math-equals hide-mobile">=</div>
+                <div class="math-result hide-mobile">
+                    <span class="currency">€</span>
+                    <span class="row-total">0.00</span>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Template Acconto -->
+    <template id="tpl-acconto">
+        <div class="entry-card acconto-type" data-type="acconto">
+            <div class="entry-main">
+                <input type="text" class="input-desc input-seamless" placeholder="Descrizione (es. Acconto Iniziale)..." value="Acconto Pagato">
+                <button class="btn-remove-entry" title="Elimina"><i data-lucide="trash-2"></i></button>
+            </div>
+            <div class="entry-math flex-start">
+                <div class="date-display acconto-display pdf-only" style="display:none; margin-top: 2px; font-weight: 500; color: var(--success);">Data Acconto</div>
+                <div class="math-group">
+                    <label style="color: var(--success);">Seleziona Data</label>
+                    <input type="date" class="input-date math-input-date" style="width: 130px; padding: 6px 10px; font-size: 0.9rem; border-color: var(--success); color: var(--success);">
+                </div>
+                <div class="math-operator pdf-exclude-shadow" style="margin-left: 10px; margin-right: 10px;"></div>
+                <div class="math-group">
+                    <label style="color: var(--success);">Importo Acconto</label>
+                    <input type="number" class="input-fixed math-input" placeholder="0.00" step="0.01" style="color: var(--success); border-color: var(--success);">
+                </div>
+                <div class="math-equals hide-mobile" style="font-weight:700; color:var(--success);">-</div>
+                <div class="math-result hide-mobile" style="color: var(--success); background-color: #ecfdf5;">
+                    <span class="currency">€ -</span>
+                    <span class="row-total" style="color: var(--success);">0.00</span>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- App Script -->
+    <script src="script.js"></script>
+</body>
+</html>
