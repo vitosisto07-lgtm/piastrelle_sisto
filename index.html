@@ -1,165 +1,384 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Preventivi Piastrellista</title>
-    <!-- PWA Meta Tags -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#EA580C">
-    <link rel="apple-touch-icon" href="tiler_logo.png">
-    
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=2">
-    <!-- html2pdf.js for easy PDF generation -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Sisto Piastrelle - Preventivi</title>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="script.js?v=2"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2c5364">
+
+    <style>
+        body {
+            font-family: Poppins;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            max-width: 1000px;
+            margin: auto;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo img {
+            height: 80px;
+        }
+
+        .info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        input {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th {
+            background: #2c5364;
+            color: white;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        td input {
+            border: none;
+            width: 100%;
+            outline: none;
+        }
+
+        .buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .add {
+            background: #27ae60;
+            color: white;
+        }
+
+        .delete {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .pdf {
+            background: #2c5364;
+            color: white;
+        }
+
+        .save {
+            background: #f39c12;
+            color: white;
+        }
+
+        .total {
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .storico {
+            margin-top: 30px;
+            background: #f2f4f8;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .preventivoSalvato {
+            padding: 8px;
+            background: white;
+            margin-top: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        @media(max-width:700px) {
+            .info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
 </head>
+
 <body>
-    
-    <!-- HOME VIEW -->
-    <div id="home-view" class="view-container active">
-        <header class="app-header home-header">
-            <div class="home-logo-container">
-                <img src="tiler_logo.png" alt="SISTO PAVIMENTI Logo" class="home-logo">
-            </div>
-            <h1>I Miei Lavori</h1>
-            <button id="install-app-btn" class="btn btn-primary btn-install" style="display: none; margin-top: 10px;">
-                <span class="icon">📲</span> Installa App sul Telefono
-            </button>
-        </header>
-        
-        <div id="jobs-list" class="jobs-container">
-            <!-- Saved jobs will be generated here by JS -->
-            <div class="empty-state">
-                <p>Nessun preventivo salvato.</p>
-                <p>Usa il tasto + per crearne uno nuovo.</p>
-            </div>
+
+    <div class="container" id="preventivo">
+
+        <div class="logo">
+            <img src="logo.png">
         </div>
 
-        <button id="fab-create" class="fab" aria-label="Crea Nuovo Lavoro">
-            <span class="icon">+</span>
-        </button>
+        <div class="info">
+
+            <input id="cliente" placeholder="Nome cliente">
+            <input id="telefono" placeholder="Telefono cliente">
+            <input id="cantiere" placeholder="Numero cantiere">
+            <input type="date" id="data">
+            <input id="indirizzo" placeholder="Indirizzo lavoro">
+
+        </div>
+
+        <table id="tabella">
+
+            <tr>
+                <th>Descrizione</th>
+                <th>MQ</th>
+                <th>€/MQ</th>
+                <th>Totale</th>
+                <th></th>
+            </tr>
+
+        </table>
+
+        <div class="buttons">
+
+            <button class="add" onclick="aggiungiRiga()">+ Aggiungi lavoro</button>
+
+            <button class="save" onclick="salvaPreventivo()">Salva Preventivo</button>
+
+            <button class="pdf" onclick="scaricaPDF()">Scarica PDF</button>
+
+        </div>
+
+        <div class="total">
+            Totale € <span id="totale">0</span>
+        </div>
+        <h3>Firma Cliente</h3>
+
+        <canvas id="firma" width="400" height="150" style="border:1px solid #000"></canvas>
+
+        <br><br>
+
+        <button onclick="pulisciFirma()">Cancella Firma</button>
+
+        <div class="storico">
+
+            <h3>Storico Preventivi</h3>
+
+            <div id="listaPreventivi"></div>
+
+        </div>
+
     </div>
 
-    <!-- CREATOR VIEW -->
-    <div id="creator-view" class="view-container hidden">
-        <header class="app-header">
-            <button id="btn-back" class="btn-icon header-btn">← Indietro</button>
-            <div class="header-center">
-                <!-- Removed dynamic logo upload since we are hardcoding the logo -->
-            </div>
-            <button id="btn-save" class="btn-text header-btn">Salva</button>
-        </header>
+    <script>
 
-        <div class="app-container">
-            <!-- Floating controls for PDF -->
-            <div class="floating-controls no-print">
-                <button id="add-section-btn" class="btn btn-primary" aria-label="Aggiungi Sezione">
-                    <span class="icon">+</span> Stanza
-                </button>
-                <button id="export-pdf-btn" class="btn btn-success" aria-label="Scarica PDF">
-                    <span class="icon">📄</span> PDF
-                </button>
-            </div>
+        document.getElementById("data").valueAsDate = new Date()
 
-            <main id="invoice-doc" class="glass-card">
-                <!-- PDF HEADER: Logo and Business Info -->
-                <div class="invoice-pdf-header">
-                    <div id="pdf-logo-container" class="pdf-logo">
-                        <img src="tiler_logo.png" alt="SISTO PAVIMENTI Logo">
-                    </div>
-                    <div class="business-info print-only">
-                        <!-- Eventuali dati fissi di tuo padre possono andare qui -->
-                    </div>
-                </div>
+        function aggiungiRiga() {
 
-                <header class="invoice-header">
-                    <input type="text" id="client-name" class="editable-title" placeholder="NOME CANTIERE / CLIENTE">
-                    <div class="date-display" id="job-date"></div>
-                </header>
+            let t = document.getElementById("tabella")
 
-                <div id="sections-container">
-                    <!-- Sections will be injected here by JS -->
-                </div>
+            let r = t.insertRow()
 
-                <footer class="invoice-footer">
-                    <div class="totals-section">
-                        <div class="total-row">
-                            <span class="label">TOT:</span>
-                            <div class="value-group">
-                                <span class="value" id="grand-total">0,00</span>
-                                <span class="print-only">-</span>
-                            </div>
-                        </div>
-                        <div class="advance-row">
-                            <span class="label">Acconto:</span>
-                            <div class="value-group">
-                                <input type="number" id="advance-payment" class="editable-number" placeholder="0" step="any">
-                                <span class="print-only">=</span>
-                            </div>
-                        </div>
-                        <div class="balance-row">
-                            <span class="label">DA PAGARE:</span>
-                            <span class="value" id="final-balance">0,00</span>
-                        </div>
-                    </div>
-                </footer>
-            </main>
-        </div>
-    </div>
+            r.innerHTML = `
 
-    <!-- Template for a Section -->
-    <template id="section-template">
-        <section class="invoice-section">
-            <div class="section-header no-print">
-                <input type="text" class="section-title editable-input font-bold" placeholder="Nome Stanza (es. Cucina, Bagno)">
-                <button class="btn btn-icon btn-danger remove-section-btn" title="Rimuovi Sezione">×</button>
-            </div>
-            <!-- Section title for PRINT only (to handle the styling without inputs) -->
-            <div class="print-section-title print-only"></div>
+<td><input placeholder="Descrizione lavoro"></td>
 
-            <div class="items-list">
-                <!-- Items will be added here -->
-            </div>
-            
-            <div class="section-actions no-print">
-                <button class="btn btn-secondary add-item-btn">+ Calcolo (Mq x €)</button>
-                <button class="btn btn-secondary add-manual-btn">+ Voce Fissa</button>
-            </div>
+<td>
+<input type="number" class="mq">
+</td>
 
-            <div class="section-total">
-                <span class="label">TOT Sezione:</span>
-                <span class="value section-total-value">0,00</span>
-            </div>
-        </section>
-    </template>
+<td>
+<input type="number" class="prezzo">
+</td>
 
-    <!-- Template for an Item Row -->
-    <template id="item-template">
-        <div class="item-row">
-            <button class="btn btn-icon btn-danger remove-item-btn no-print" title="Rimuovi Voce">×</button>
-            <input type="text" class="item-desc editable-input" placeholder="Descrizione">
-            
-            <div class="calc-box">
-                <div class="calc-group">
-                    <input type="number" class="item-qty editable-number" placeholder="Mq" step="any">
-                    <span class="separator">X</span>
-                    <input type="number" class="item-price editable-number" placeholder="€" step="any">
-                    <span class="separator">=</span>
-                </div>
-                <!-- Spostato il display del totale sotto su mobile o a destra senza input testo sovrapposto -->
-                <div class="item-total-box">
-                    <input type="number" class="item-total-input editable-number no-print hidden-input" placeholder="Tot" step="any" style="display:none;">
-                    <div class="item-total-display-wrapper">
-                        <span class="item-total-currency">€</span>
-                        <span class="item-total-display">0,00</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </template>
+<td class="tot">0</td>
 
-    <script src="script.js"></script>
+<td>
+<button class="delete">X</button>
+</td>
+
+`
+
+            r.querySelector(".delete").onclick = () => {
+                r.remove()
+                calcola()
+            }
+
+            r.querySelectorAll("input").forEach(i => {
+                i.oninput = calcola
+            })
+
+        }
+
+        function calcola() {
+
+            let righe = document.querySelectorAll("#tabella tr")
+
+            let totale = 0
+
+            righe.forEach((r, i) => {
+
+                if (i == 0) return
+
+                let mq = r.querySelector(".mq").value
+                let prezzo = r.querySelector(".prezzo").value
+
+                let t = 0
+
+                if (mq && prezzo)
+                    t = mq * prezzo
+                else if (prezzo)
+                    t = Number(prezzo)
+
+                r.querySelector(".tot").innerText = t.toFixed(2)
+
+                totale += t
+
+            })
+
+            document.getElementById("totale").innerText = totale.toFixed(2)
+
+        }
+
+        function scaricaPDF() {
+
+            let element = document.getElementById("preventivo")
+
+            html2pdf().from(element).save("preventivo_sisto_piastrelle.pdf")
+
+        }
+
+        function salvaPreventivo() {
+
+            let cliente = document.getElementById("cliente").value
+            let totale = document.getElementById("totale").innerText
+
+            let storico = JSON.parse(localStorage.getItem("storico") || "[]")
+
+            storico.push({
+                cliente: cliente,
+                totale: totale
+            })
+
+            localStorage.setItem("storico", JSON.stringify(storico))
+
+            caricaStorico()
+
+        }
+
+        function caricaStorico() {
+
+            let storico = JSON.parse(localStorage.getItem("storico") || "[]")
+
+            let lista = document.getElementById("listaPreventivi")
+
+            lista.innerHTML = ""
+
+            storico.forEach(p => {
+
+                let div = document.createElement("div")
+
+                div.className = "preventivoSalvato"
+
+                div.innerText = p.cliente + " - € " + p.totale
+
+                lista.appendChild(div)
+
+            })
+
+        }
+
+        aggiungiRiga()
+
+        caricaStorico()
+        let canvas = document.getElementById("firma");
+        let ctx = canvas.getContext("2d");
+
+        let disegno = false;
+
+        canvas.addEventListener("mousedown", () => disegno = true);
+        canvas.addEventListener("mouseup", () => disegno = false);
+        canvas.addEventListener("mousemove", disegna);
+
+        function disegna(e) {
+
+            if (!disegno) return;
+
+            ctx.lineWidth = 2;
+            ctx.lineCap = "round";
+
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(e.offsetX, e.offsetY);
+
+        }
+
+        function pulisciFirma() {
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        }
+
+        let deferredPrompt;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            let btn = document.createElement("button");
+            btn.innerText = "Installa App";
+            btn.style = "padding:10px 15px;margin-top:15px;background:#27ae60;color:white;border:none;border-radius:6px;cursor:pointer;";
+            document.body.insertBefore(btn, document.getElementById("preventivo").nextSibling);
+            btn.onclick = () => {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        alert('App installata!');
+                    }
+                    deferredPrompt = null;
+                });
+            };
+        });
+
+    </script>
+
+
+
 </body>
+
 </html>

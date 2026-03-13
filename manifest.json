@@ -1,21 +1,15 @@
 {
-  "name": "Sisto Pavimenti Preventivi",
-  "short_name": "SistoPreventivi",
-  "description": "App per calcolo preventivi piastrellista",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#F8FAFC",
-  "theme_color": "#EA580C",
-  "icons": [
-    {
-      "src": "tiler_logo.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "tiler_logo.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
+    "name": "Sisto Piastrelle",
+    "short_name": "Preventivi",
+    "start_url": "index.html",
+    "display": "standalone",
+    "background_color": "#0f2027",
+    "theme_color": "#2c5364",
+    "icons": [
+        {
+            "src": "logo.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        }
+    ]
 }
